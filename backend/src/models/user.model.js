@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 
-const userSchema=new momgoose.Schema({
+const userSchema=new mongoose.Schema({
     name:{
         type:String,
         required:true,
@@ -13,7 +13,7 @@ const userSchema=new momgoose.Schema({
         unique:true,
         trim:true,
         lowercase:true,
-        match:[/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/],
+        match:[/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/],
         index:true,
     },
     password:{

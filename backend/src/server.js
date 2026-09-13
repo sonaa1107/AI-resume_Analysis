@@ -6,6 +6,7 @@ const connectDB=require('./config/db');
 const {errorHandler,notFound}=require('./middleware/errorHandler');
 const healthRouter=require('./routes/health');
 const cookieParser=require('cookie-parser');
+const authRouter=require('./routes/auth')
 
 const app=express();
 
@@ -23,6 +24,7 @@ app.use(cookieParser());
 if(!env.isProd)app.use(morgan('dev'));
 
 app.use('/health', healthRouter);
+app.use('/api/auth',authRouter);
 
 app.use(notFound);
 app.use(errorHandler);
