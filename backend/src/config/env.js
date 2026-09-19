@@ -22,6 +22,6 @@ module.exports={
     split(',').
     map((origin)=>origin.trim()).filter(Boolean),
     geminiApiKey:process.env.GEMINI_API_KEY,
-    geminiModel:process.env.GEMINI_MODEL||'gemini-3.6-flash',
+    geminiModel:process.env.GEMINI_MODEL||'gemini-3.5-flash-lite',
     isProd:process.env.NODE_ENV==='production'
 };
