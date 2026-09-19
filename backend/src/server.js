@@ -1,12 +1,15 @@
 const express=require('express');
 const cors=require('cors');
 const morgan=require('morgan');
+const cookieParser=require('cookie-parser');
+
 const env=require('./config/env');
 const connectDB=require('./config/db');
 const {errorHandler,notFound}=require('./middleware/errorHandler');
+
 const healthRouter=require('./routes/health');
-const cookieParser=require('cookie-parser');
 const authRouter=require('./routes/auth')
+const resumeRouter=require('./routes/resume')
 
 const app=express();
 
@@ -25,6 +28,7 @@ if(!env.isProd)app.use(morgan('dev'));
 
 app.use('/health', healthRouter);
 app.use('/api/auth',authRouter);
+app.use('/api/resume',resumeRouter)
 
 app.use(notFound);
 app.use(errorHandler);

@@ -14,8 +14,8 @@ const upload=multer({
     },
 })
 
-const uploadPdf=(filed='file')=>(req,res,next)=>{
-    upload.single(field)(req,res,(error)=>{
+const uploadPdf=(field='file')=>(req,res,next)=>{
+    upload.single(field)(req,res,(err)=>{
         if(err instanceof multer.MulterError){
             if(err.code ==="LIMIT_FILE_SIZE"){
                 return next(ApiError.badRequest("PDF excees 5MB Limit"))

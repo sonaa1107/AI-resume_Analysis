@@ -1,5 +1,4 @@
 const mongoose=require('mongoose');
-const { string } = require('zod');
 
 const linkSchema=new mongoose.Schema({
     label:String,url:String},
@@ -70,7 +69,7 @@ const resumeVersionSchema=new mongoose.Schema({
     parsedSections:{type:parsedSectionsScehma,default:()=>({})},
     sourceType:{
         type:String,
-        enum:["upload,","rewrite"],
+        enum:["upload","rewrite"],
         required:true,
     },
     parentVersionId:{

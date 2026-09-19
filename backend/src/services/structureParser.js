@@ -3,8 +3,8 @@ const { z } = require("zod");
 
 const env = require("../config/env");
 
-const ai = env.GEMINI_API_KEY
-  ? new GoogleGenAI({ apiKey: env.GEMINI_API_KEY })
+const ai = env.geminiApiKey
+  ? new GoogleGenAI({ apiKey: env.geminiApiKey })
   : null;
 
 
@@ -347,27 +347,111 @@ const EMPTY = {
 
 
 // Main resume parsing function
+// async function parseResume(rawText) {
+
+//   // Don't call Gemini if API isn't configured
+//   // or resume text is empty
+//   if (!ai || !rawText?.trim()) {
+//     return EMPTY;
+//   }
+
+
+//   // Create the prompt
+//   const prompt = buildPrompt(rawText);
+
+
+//   // Retry Gemini request once if something fails
+//   for (let attempt = 1; attempt <= 2; attempt++) {
+
+//     try {
+
+//       const result = await ai.models.generateContent({
+
+//         model: env.geminiModel,
+
+//         contents: [
+//           {
+//             role: "user",
+//             parts: [
+//               {
+//                 text: prompt,
+//               },
+//             ],
+//           },
+//         ],
+
+//         config: {
+//           responseMimeType: "application/json",
+
+//           responseSchema,
+
+//           temperature: 0.1,
+//         },
+//       });
+
+
+//       // Extract generated text
+//       const text =
+//         typeof result.text === "function"
+//           ? result.text()
+//           : result.text;
+
+
+//       // Make sure Gemini returned something
+//       if (!text) {
+//         throw new Error("Empty response");
+//       }
+
+
+//       // Convert JSON string into JavaScript object
+//       const parsed = JSON.parse(text);
+
+
+//       // Validate Gemini output using Zod
+//       return validator.parse(parsed);
+    
+
+//     } catch (err) {
+
+//       // If second attempt also fails,
+//       // return safe empty structure
+//       if (attempt === 2) {
+
+//         console.error(
+//           "Structured parse failed:",
+//           err.message
+//         );
+
+//         return EMPTY;
+//       }
+//     }
+// }
+//     return EMPTY
+// }
+
 async function parseResume(rawText) {
 
-  // Don't call Gemini if API isn't configured
-  // or resume text is empty
   if (!ai || !rawText?.trim()) {
+    console.log("AI missing OR rawText empty");
     return EMPTY;
   }
 
+  console.log("========== RESUME TEXT ==========");
+  console.log(rawText);
+  console.log("=================================");
 
-  // Create the prompt
   const prompt = buildPrompt(rawText);
 
-
-  // Retry Gemini request once if something fails
   for (let attempt = 1; attempt <= 2; attempt++) {
 
     try {
 
-      const result = await ai.models.generateContent({
+      console.log(`Gemini attempt: ${attempt}`);
 
-        model: env.geminiModel,
+      const modelName = (env.geminiModel || "gemini-3.6-flash").trim();
+
+      const result = await ai.models.generateContent({
+        model: modelName,
 
         contents: [
           {
@@ -382,50 +466,56 @@ async function parseResume(rawText) {
 
         config: {
           responseMimeType: "application/json",
-
           responseSchema,
-
           temperature: 0.1,
         },
       });
 
+      console.log("Gemini response received");
 
-      // Extract generated text
       const text =
         typeof result.text === "function"
           ? result.text()
           : result.text;
 
+      console.log("========== GEMINI OUTPUT ==========");
+      console.log(text);
+      console.log("===================================");
 
-      // Make sure Gemini returned something
       if (!text) {
         throw new Error("Empty response");
       }
 
+      const normalizedText = text
+        .trim()
+        .replace(/^```json\s*/i, "")
+        .replace(/^```\s*/i, "")
+        .replace(/\s*```$/i, "")
+        .trim();
 
-      // Convert JSON string into JavaScript object
-      const parsed = JSON.parse(text);
+      const parsed = JSON.parse(normalizedText);
 
+      console.log("========== PARSED JSON ==========");
+      console.log(JSON.stringify(parsed, null, 2));
+      console.log("=================================");
 
-      // Validate Gemini output using Zod
-      return validator.parse(parsed);
+      const validated = validator.parse(parsed);
+
+      console.log("========== ZOD VALIDATION PASSED ==========");
+
+      return validated;
 
     } catch (err) {
 
-      // If second attempt also fails,
-      // return safe empty structure
+      console.error("========== PARSER ERROR ==========");
+      console.error(err);
+      console.error("===================================");
+
       if (attempt === 2) {
-
-        console.error(
-          "Structured parse failed:",
-          err.message
-        );
-
-        return EMPTY;
+        throw err;
       }
     }
   }
-
 
   return EMPTY;
 }
