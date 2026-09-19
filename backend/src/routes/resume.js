@@ -11,6 +11,10 @@ const {uploadPdf}=require('../middleware/upload');
 const Resume=require('../models/resume.model');
 const ResumeVersion=require('../models/resumeVersions')
 
+const {analyzeLimiter}=require('../middleware/rateLimiter');
+const Analysis=require('../models/analysis.model');
+const {analyzeResume}=require('../services/geminiService')
+
 const {extractText}=require('../services/pdfService');
 const {parseResume:parseStructured}=require('../services/structureParser')
 
@@ -165,7 +169,9 @@ router.delete(
     await ResumeVersion.deleteMany({
       resumeId: resume._id,
     });
-
+    await Analysis.deleteMany({
+      resumeId: resume._id,
+    })
     await resume.deleteOne();
 
     res.json({
@@ -173,5 +179,112 @@ router.delete(
     });
   })
 );
+
+const analyzeBody = z.object({
+  versionId: objectIdSchema.optional(),
+  targetRole: z.string().trim().max(120).optional(),
+});
+
+router.post(
+  "/:id/analyze",
+  validate(idParam, "params"),
+  validate(analyzeBody),
+  asyncHandler(async (req, res) => {
+    const resume = await loadOwnedResume(req);
+
+    const versionId =
+      req.body.versionId || resume.currentVersionId;
+
+    if (!versionId) {
+      throw ApiError.badRequest("No version to analyze");
+    }
+
+    const version = await loadVersion(resume._id, versionId);
+
+    const {
+      analysis,
+      model,
+      promptTokens,
+      responseTokens,
+    } = await analyzeResume({
+      rawText: version.rawText,
+      targetRole: req.body.targetRole,
+    });
+
+    const saved = await Analysis.create({
+      userId: req.user._id,
+      resumeId: resume._id,
+      versionId: version._id,
+
+      atsScore: analysis.atsScore,
+      scoreBreakdown: analysis.scoreBreakdown,
+      issues: analysis.issues,
+      strengths: analysis.strengths,
+      bulletRewrites: analysis.bulletRewrites,
+      keywordsPresent: analysis.keywordsPresent,
+      keywordsMissing: analysis.keywordsMissing,
+      summary: analysis.summary,
+
+      model,
+      promptTokens,
+      responseTokens,
+    });
+
+    version.latestAnalysisId = saved._id;
+    await version.save();
+
+    res.status(201).json({
+      analysis: saved,
+    });
+  })
+);
+
+router.get(
+  "/:id/analyses",
+  validate(idParam, "params"),
+  asyncHandler(async (req, res) => {
+    const resume = await loadOwnedResume(req);
+
+    const analyses = await Analysis.find({
+      resumeId: resume._id,
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.json({ analyses });
+  })
+);
+
+router.get(
+  "/:id/versions/:versionId/analysis",
+  validate(
+    z.object({
+      id: objectIdSchema,
+      versionId: objectIdSchema,
+    }),
+    "params"
+  ),
+  asyncHandler(async (req, res) => {
+    const resume = await loadOwnedResume(req);
+
+    const version = await loadVersion(
+      resume._id,
+      req.params.versionId
+    );
+
+    const analysis = await Analysis.findOne({
+      resumeId: resume._id,
+      versionId: version._id,
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.json({
+      analysis: analysis || null,
+    });
+  })
+);
+
+module.exports = router;
 
 module.exports=router;
