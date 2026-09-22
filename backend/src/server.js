@@ -10,6 +10,10 @@ const {errorHandler,notFound}=require('./middleware/errorHandler');
 const healthRouter=require('./routes/health');
 const authRouter=require('./routes/auth')
 const resumeRouter=require('./routes/resume')
+const dashboardRouter=require('./routes/dashboard');
+const insightsRouter=require('./routes/insights');
+const versionsRouter=require('./routes/versions');
+const historyRouter=require('./routes/history');
 
 const app=express();
 
@@ -28,7 +32,11 @@ if(!env.isProd)app.use(morgan('dev'));
 
 app.use('/health', healthRouter);
 app.use('/api/auth',authRouter);
-app.use('/api/resume',resumeRouter)
+app.use('/api/resume',resumeRouter);
+app.use('/api/dashboard',dashboardRouter);
+app.use('/api/insights',insightsRouter);
+app.use('/api/versions',versionsRouter);
+app.use('/api/history',historyRouter);
 
 app.use(notFound);
 app.use(errorHandler);

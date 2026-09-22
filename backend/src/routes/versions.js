@@ -67,13 +67,13 @@ router.get('/',
       parentVersionId: v.parentVersionId,
     };
   });
-  const total={
+  const totals={
     all:items.length,
     uploads:items.filter((i)=>i.sourceType==='upload').length,
     rewrites:items.filter((i)=>i.sourceType==='rewrite').length,
   };
-  res.json({versions:totals,items});
+  res.json({versions:items,totals});
 })
 )
 
-module.exports=router;
+module.exports = router;
