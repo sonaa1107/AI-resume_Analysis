@@ -32,7 +32,7 @@ if(!env.isProd)app.use(morgan('dev'));
 
 app.use('/health', healthRouter);
 app.use('/api/auth',authRouter);
-app.use('/api/resume',resumeRouter);
+app.use('/api/resumes',resumeRouter);
 app.use('/api/dashboard',dashboardRouter);
 app.use('/api/insights',insightsRouter);
 app.use('/api/versions',versionsRouter);

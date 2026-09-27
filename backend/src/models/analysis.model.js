@@ -3,7 +3,7 @@ const { string } = require('zod')
 
 const issueSchema=new mongoose.Schema({
     title:{type:String,required:true},
-    severity:{type:String,enum:["low","medium","low"],default:"medium"},
+    severity:{type:String,enum:["low","medium","high"],default:"medium"},
     explaination:String,
     fix:String,
 },{_id:false})

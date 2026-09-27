@@ -64,15 +64,9 @@ router.post(
   asyncHandler(async (req, res) => {
     const { text, meta } = await extractText(req.file.buffer);
 
-    console.log("========== EXTRACTED TEXT ==========");
-    console.log(text);
-    console.log("====================================");
 
     const parsedSections = await parseStructured(text);
 
-    console.log("========== PARSED SECTIONS ==========");
-    console.log(JSON.stringify(parsedSections, null, 2));
-    console.log("====================================");
 
     const title =
       (req.body.title || "").trim() ||
